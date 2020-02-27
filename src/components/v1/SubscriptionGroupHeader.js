@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import ProductImages from './ProductImages';
 import ProductList from './ProductList';
 import OrderFrequencyBlock from './OrderFrequencyBlock';
+import CasePreferencesBlock from './CasePreferencesBlock';
 import NextShipDateBlock from './NextShipDateBlock';
 import Translation from '../Translation';
 import Message from './Message';
@@ -23,56 +24,58 @@ class SubscriptionGroupHeader extends Component {
       product_count: order.order_products.length,
     };
 
-    if (order.order_products.length === 1) {
+    if (order.order_products.length === 1 && !order.order_products[0].product_title.includes('Subscription')) {
       return (
-        <Translation
-          textKey="subscription_title_one_product"
-          mergeFields={mergeFields}
-        />
+          <Translation
+              textKey="subscription_title_one_product"
+              mergeFields={mergeFields}
+          />
+      );
+    } else if (order.shopify_order_tags === "wine-club-order" || order.order_products[0].product_title.includes('Subscription')) {
+      return (<div>Wine Club Subscription - #{order.id}</div>);
+    } else {
+      return (
+          <Translation
+              textKey="subscription_title_multiple_products"
+              mergeFields={mergeFields}
+          />
       );
     }
-
-    return (
-      <Translation
-        textKey="subscription_title_multiple_products"
-        mergeFields={mergeFields}
-      />
-    );
   }
 
   renderPauseResumeStatus() {
     const { order } = this.props;
     return (
-      <React.Fragment>
-        { order.is_paused ?
-          <Translation textKey="paused_subscription_status" /> :
-          <Translation textKey="active_subscription_status" />
-        }
-      </React.Fragment>
+        <React.Fragment>
+          { order.is_paused ?
+              <Translation textKey="paused_subscription_status" /> :
+              <Translation textKey="active_subscription_status" />
+          }
+        </React.Fragment>
     );
   }
 
   renderPauseResumeButton() {
     const { order, allowPauseSubscription } = this.props;
     return (
-      <React.Fragment>
-        { allowPauseSubscription ?
-          <React.Fragment>&nbsp;<PauseResumeButton order={order} /></React.Fragment> :
-          null
-        }
-      </React.Fragment>
+        <React.Fragment>
+          { allowPauseSubscription ?
+              <React.Fragment>&nbsp;<PauseResumeButton order={order} /></React.Fragment> :
+              null
+          }
+        </React.Fragment>
     );
   }
 
   renderSubscriptionStatus() {
     return (
-      <React.Fragment>
-        <p>
-          <Translation textKey="subscription_status_heading" />
-        </p>
-        { this.renderPauseResumeStatus() }
-        { this.renderPauseResumeButton() }
-      </React.Fragment>
+        <React.Fragment>
+          <p>
+            <Translation textKey="subscription_status_heading" />
+          </p>
+          { this.renderPauseResumeStatus() }
+          { this.renderPauseResumeButton() }
+        </React.Fragment>
     );
   }
 
@@ -81,29 +84,29 @@ class SubscriptionGroupHeader extends Component {
 
     if (order.order_hooks.length > 0) {
       return (
-        <Message type="info">
-          {
-            order.order_hooks.map((orderHook) => {
-              switch (orderHook.title) {
-                case OrderHookTypes.ORDER_HOOK_TYPE_SWITCH_PRICE:
-                case OrderHookTypes.ORDER_HOOK_TYPE_SWITCH_PRODUCT:
-                  return (
-                    <p key="order_hook_switch_price_product_warning">
-                      <Translation textKey="order_hook_switch_price_product_warning" />
-                    </p>
-                  );
-                case OrderHookTypes.ORDER_HOOK_TYPE_MAKE_CANCELLABLE:
-                  return (
-                    <p key="order_hook_make_cancellable_warning">
-                      <Translation textKey="order_hook_make_cancellable_warning" />
-                    </p>
-                  );
-                default:
-                  return null;
-              }
-            })
-          }
-        </Message>
+          <Message type="info">
+            {
+              order.order_hooks.map((orderHook) => {
+                switch (orderHook.title) {
+                  case OrderHookTypes.ORDER_HOOK_TYPE_SWITCH_PRICE:
+                  case OrderHookTypes.ORDER_HOOK_TYPE_SWITCH_PRODUCT:
+                    return (
+                        <p key="order_hook_switch_price_product_warning">
+                          <Translation textKey="order_hook_switch_price_product_warning" />
+                        </p>
+                    );
+                  case OrderHookTypes.ORDER_HOOK_TYPE_MAKE_CANCELLABLE:
+                    return (
+                        <p key="order_hook_make_cancellable_warning">
+                          <Translation textKey="order_hook_make_cancellable_warning" />
+                        </p>
+                    );
+                  default:
+                    return null;
+                }
+              })
+            }
+          </Message>
       );
     }
     return null;
@@ -113,58 +116,63 @@ class SubscriptionGroupHeader extends Component {
     const { order, allowPauseSubscription } = this.props;
 
     return (
-      <div className="subscription-header">
-        <ProductImages products={order.order_products} />
-        <div className="subscription-details-container">
-          <h3>{this.renderSubscriptionTitle()}</h3>
-          {
-            this.props.hasDeletedProducts ?
-              <Message
-                type="error"
-                key="deleted-product-message"
-                titleTextKey="order_deleted_product"
-              /> : null
-          }
-          <NextShipDateBlock orderId={this.props.order.id} />
-          { order.has_prepaid ?
-            <OrderPrepaidBlock orderId={order.id} /> : null }
-          <div className="subscription-details-block-container">
-            <div className="flex-column flex-column-half">
-              <ProductList
-                products={order.order_products}
-                displayPrice={false}
-                currencyFormat={order.currency_format}
-              />
-              <div className="subscription-details-block">
-                <p><Translation textKey="shipping_info_heading" /></p>
-                <p>{order.first_name} {order.last_name}</p>
-                <p>{order.address1}</p>
-                {order.address2 ? <p>{order.address2}</p> : null}
-                <p>{order.company}</p>
-                <p>{order.city} {order.province}, {order.zip}</p>
-                <p>{order.country}</p>
+        <div className="subscription-header">
+          <ProductImages products={order.order_products} />
+          <div className="subscription-details-container">
+            <h3>{this.renderSubscriptionTitle()}</h3>
+            {
+              this.props.hasDeletedProducts ?
+                  <Message
+                      type="error"
+                      key="deleted-product-message"
+                      titleTextKey="order_deleted_product"
+                  /> : null
+            }
+            <NextShipDateBlock orderId={this.props.order.id} />
+            { order.has_prepaid ?
+                <OrderPrepaidBlock orderId={order.id} /> : null }
+            <div className="subscription-details-block-container">
+              <div className="flex-column flex-column-half">
+                <ProductList
+                    products={order.order_products}
+                    displayPrice={false}
+                    currencyFormat={order.currency_format}
+                />
+                <div className="subscription-details-block">
+                  <p><Translation textKey="shipping_info_heading" /></p>
+                  <p>{order.first_name} {order.last_name}</p>
+                  <p>{order.address1}</p>
+                  {order.address2 ? <p>{order.address2}</p> : null}
+                  <p>{order.company}</p>
+                  <p>{order.city} {order.province}, {order.zip}</p>
+                  <p>{order.country}</p>
+                </div>
+              </div>
+              <div className="flex-column flex-column-half">
+                <div className="subscription-details-block">
+                  <p><Translation textKey="payment_info_heading" /></p>
+                  <CardInformationBlock card={order.credit_card} />
+                </div>
+                <div className="subscription-details-block">
+                  <p><Translation textKey="order_frequency_heading" /></p>
+                  <OrderFrequencyBlock orderId={this.props.order.id} />
+                </div>
+                {(order.shopify_order_tags === "wine-club-order" || order.order_products[0].product_title.includes('Subscription')) ?
+                    <div className="subscription-details-block">
+                      <p>Wine Club Preferences</p>
+                      <CasePreferencesBlock orderId={this.props.order.id} />
+                    </div> : null }
+                <div className="subscription-details-block">
+                  { !order.is_paused && !allowPauseSubscription ?
+                      null :
+                      this.renderSubscriptionStatus()
+                  }
+                </div>
               </div>
             </div>
-            <div className="flex-column flex-column-half">
-              <div className="subscription-details-block">
-                <p><Translation textKey="payment_info_heading" /></p>
-                <CardInformationBlock card={order.credit_card} />
-              </div>
-              <div className="subscription-details-block">
-                <p><Translation textKey="order_frequency_heading" /></p>
-                <OrderFrequencyBlock orderId={this.props.order.id} />
-              </div>
-              <div className="subscription-details-block">
-                { !order.is_paused && !allowPauseSubscription ?
-                  null :
-                  this.renderSubscriptionStatus()
-                }
-              </div>
-            </div>
+            { this.renderOrderHooksWarning() }
           </div>
-          { this.renderOrderHooksWarning() }
         </div>
-      </div>
     );
   }
 }
