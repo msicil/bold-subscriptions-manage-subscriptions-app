@@ -160,7 +160,7 @@ class SubscriptionGroupHeader extends Component {
                 {(order.shopify_order_tags === "wine-club-order" || order.order_products[0].product_title.includes('Subscription')) ?
                     <div className="subscription-details-block">
                       <p>Wine Club Preferences</p>
-                      <CasePreferencesBlock orderId={this.props.order.id} />
+                      <CasePreferencesBlock orderId={this.props.order.id} toggleDetails={() => this.props.toggleDetails()} />
                     </div> : null }
                 <div className="subscription-details-block">
                   { !order.is_paused && !allowPauseSubscription ?
@@ -181,6 +181,7 @@ SubscriptionGroupHeader.propTypes = {
   order: ORDER_PROP_TYPE.isRequired,
   hasDeletedProducts: PropTypes.bool.isRequired,
   allowPauseSubscription: PropTypes.bool.isRequired,
+  toggleDetails: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = (state, ownProps) => {

@@ -34,7 +34,7 @@ class SubscriptionGroup extends Component {
 
     return (
       <div className="subscription-container">
-        <SubscriptionGroupHeader orderId={order.id} />
+        <SubscriptionGroupHeader orderId={order.id} toggleDetails={() => this.toggleDetails()} />
         {
           hasDeletedProducts ? null :
           <div className="subscription-content-container">

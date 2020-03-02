@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import SelectField from './SelectField';
@@ -39,7 +40,7 @@ class CasePreferencesBlock extends Component {
 
   getData() {
     const shopifyCustomerId = this.props.order.shopify_customer_id;
-    fetch(`https://testingroom18.myshopify.com/admin/api/2019-10/customers/${shopifyCustomerId}/metafields.json`,{
+    fetch(`https://testingroom18.myshopify.com/admin/api/2019-10/customers/${shopifyCustomerId}/metafields.json`, {
       headers: {
         'X-Shopify-Access-Token': 'b3a13411c43e3f26aa89b5db24996c55',
         'Content-Type': 'application/json',
@@ -96,60 +97,94 @@ class CasePreferencesBlock extends Component {
       size: inputData.get('size').toString(),
       type: inputData.get('type').toString(),
     };
-    console.log(formInformation)
-    e.preventDefault();
 
-    fetch(`https://testingroom18.myshopify.com/admin/api/2020-01/metafields/${this.state.sizeMetafieldID}.json`, {
+    e.preventDefault();
+    this.setState({
+      updateCasePreferencesButtonDisabled: true,
+      updatingCasePreferences: true,
+    });
+
+    const sizeRes = await axios({
+      url: `https://testingroom18.myshopify.com/admin/api/2020-01/metafields/${this.state.sizeMetafieldID}.json`,
       method: 'PUT',
       headers: {
         'X-Shopify-Access-Token': 'b3a13411c43e3f26aa89b5db24996c55',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
+      data: JSON.stringify({
         metafield: {
           id: this.state.sizeMetafieldID,
           value: formInformation.size,
           value_type: 'integer',
         },
       }),
-    }).then(res => res.json())
-      .then(
-        (result) => {
-          const selectedSize = result.metafield.value;
-          const sizeMetafieldID = result.metafield.id;
-          this.setState({
-            selectedSize,
-            sizeMetafieldID,
-          });
-        },
-      );
+    });
 
-    fetch(`https://testingroom18.myshopify.com/admin/api/2020-01/metafields/${this.state.typeMetafieldID}.json`, {
+    const typeRes = await axios({
+      url: `https://testingroom18.myshopify.com/admin/api/2020-01/metafields/${this.state.typeMetafieldID}.json`,
       method: 'PUT',
       headers: {
         'X-Shopify-Access-Token': 'b3a13411c43e3f26aa89b5db24996c55',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
+      data: JSON.stringify({
         metafield: {
           id: this.state.typeMetafieldID,
           value: formInformation.type,
           value_type: 'string',
         },
       }),
-    }).then(res => res.json())
-      .then(
-        (result) => {
-          const selectedType = result.metafield.value;
-          const typeMetafieldID = result.metafield.id;
-          this.setState({
-            selectedType,
-            typeMetafieldID,
-          });
-        },
-      );
+    });
 
-    this.disableEditing();
+    Promise.all([typeRes, sizeRes]).then((values) => {
+      const selectedType = values[0].data.metafield.value;
+      const typeMetafieldID = values[0].data.metafield.id;
+      const selectedSize = values[1].data.metafield.value;
+      const sizeMetafieldID = values[1].data.metafield.id;
+      this.setState({
+        selectedType,
+        typeMetafieldID,
+        selectedSize,
+        sizeMetafieldID,
+      });
+      this.refreshCase();
+    });
+  }
+
+  async refreshCase() {
+    const shopifyCustomerId = this.props.order.shopify_customer_id;
+    const subscriptionId = this.props.order.id;
+    const shop = 'testingroom18.myshopify.com';
+    const body = {
+      customer_id: shopifyCustomerId,
+      subscription_id: subscriptionId,
+      shop,
+    };
+    try {
+      const res = await axios({
+        method: 'post',
+        url: 'https://lot18.j.blackfire.pro/map/lot18_refresh_subscription?auth=5OzgzAAX4dPQ9Uyed3n8FtVJd1WevhwP:640a3bb0df3e96afc1a5a50aab36ddca553b67ecef02bb8652ba0da0442c337d',
+        params: body,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log(res);
+      await this.props.appInitializeData();
+      this.disableEditing();
+      this.setState({
+        updateCasePreferencesButtonDisabled: false,
+        updatingCasePreferences: false,
+      });
+    } catch (e) {
+      console.log(e);
+      await this.props.appInitializeData();
+      this.disableEditing();
+      this.setState({
+        updateCasePreferencesButtonDisabled: false,
+        updatingCasePreferences: false,
+      });
+    }
   }
 
   dismissMessage() {
@@ -187,7 +222,7 @@ class CasePreferencesBlock extends Component {
               <Select
                 name="size"
                 defaultValue={`${this.state.selectedSize}`}
-                options={[{ name: "6 bottles", value: 6 }, { name: "12 bottles", value: 12 }]}
+                options={[{ name: '6 bottles', value: 6 }, { name: '12 bottles', value: 12 }]}
                 onChange={this.caseSizeChange}
               />
             </div>
@@ -219,18 +254,6 @@ class CasePreferencesBlock extends Component {
           </form>
           :
           <div>
-            {this.props.frequencyIntervalMessage ?
-              <Message
-                key="shipping-address-message"
-                title={this.props.frequencyIntervalMessage.message}
-                titleTextKey={this.props.frequencyIntervalMessage.messageTextKey}
-                type={this.props.frequencyIntervalMessage.type}
-                dismissable
-                onDismissClick={this.dismissMessage}
-              />
-              :
-              null
-            }
             <span
               key="change_preferences_info"
               role="presentation"
@@ -258,6 +281,7 @@ CasePreferencesBlock.propTypes = {
   dismissFrequencyIntervalMessage: PropTypes.func.isRequired,
   frequencyIntervalMessage: MESSAGE_PROP_TYPE,
   order: ORDER_PROP_TYPE.isRequired,
+  appInitializeData: PropTypes.func.isRequired,
   // group: PropTypes.shape({}).isRequired,
   // updateFrequencyInterval: PropTypes.func.isRequired,
 };
@@ -274,6 +298,9 @@ const mapStateToProps = (state, ownProps) => ({
 const mapDispatchToProps = dispatch => ({
   dismissFrequencyIntervalMessage: (orderId) => {
     dispatch(actions.dismissFrequencyIntervalMessage(orderId));
+  },
+  appInitializeData: () => {
+    dispatch(actions.appDataInitialize());
   },
 });
 

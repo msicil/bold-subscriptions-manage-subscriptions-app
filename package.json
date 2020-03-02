@@ -18,10 +18,12 @@
     "eslint-scope": "3.7.1"
   },
   "dependencies": {
+    "axios": "^0.19.2",
     "classnames": "^2.2.5",
     "idempotent-babel-polyfill": "^6.26.0-1",
     "moment": "^2.20.1",
     "prop-types": "^15.6.0",
+    "qs": "^6.9.1",
     "query-string": "^6.2.0",
     "react": "^16.2.0",
     "react-dates": "^16.7.0",
