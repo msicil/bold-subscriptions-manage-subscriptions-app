@@ -57,9 +57,7 @@ class SubscriptionGroup extends Component {
               <AddressShippingBlock orderId={order.id} />
               <PaymentInformationBlock orderId={order.id} />
               <OrderProductsBlock orderId={order.id} />
-              <UpcomingOrdersBlock orderId={order.id} />
               <OrderDiscountBlock orderId={order.id} />
-              <TransactionHistoryBlock orderId={order.id} />
               {
                 (order.is_cancellable) ?
                   <OrderCancellationBlock orderId={order.id} /> :
