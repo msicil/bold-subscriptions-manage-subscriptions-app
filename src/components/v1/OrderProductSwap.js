@@ -21,8 +21,7 @@ class OrderProductSwap extends Component {
     this.state = {
       displayProducts: false,
       confirmSwap: false,
-      offset: 0,
-      pagedProducts: []
+      offset: 0
     };
 
     this.onClickToggleSwap = this.onClickToggleSwap.bind(this);
@@ -43,32 +42,33 @@ class OrderProductSwap extends Component {
       );
       this.setState({
         displayProducts: false,
-        pageCount: Math.ceil(group.products_with_price_difference.length / 10),
       });
     } else {
       this.setState({
         displayProducts: true,
-        pageCount: Math.ceil(group.products_with_price_difference.length / 10),
       });
     }
   }
 
-  setProductPage() {
-    const swappableProducts = this.props.group.products_with_price_difference;
-    const productCount = this.props.group.products_with_price_difference.length;
-    const pagedProducts = swappableProducts.slice(offset,Math.min(productCount-1,offset+10));
-    this.setState({
-      pagedProducts
-    });
-  }
+  // setProductPage() {
+  //   if(this.props.group.products_with_price_difference) {
+  //     const swappableProducts = this.props.group.products_with_price_difference;
+  //     console.log(swappableProducts);
+  //     const productCount = swappableProducts.length;
+  //     const pagedProducts = swappableProducts.slice(this.state.offset, Math.min(productCount - 1, this.state.offset + 10));
+  //     console.log(pagedProducts);
+  //     this.setState({
+  //       pagedProducts,
+  //       pageCount: Math.ceil(swappableProducts.length / 10),
+  //     });
+  //   }
+  // }
 
   handlePageClick = data => {
     let selected = data.selected;
     let offset = Math.ceil(selected * 10);
 
-    this.setState({ offset: offset }, () => {
-      this.setProductPage();
-    });
+    this.setState({ offset });
   };
 
   onClickToggleSwap() {
@@ -78,30 +78,6 @@ class OrderProductSwap extends Component {
       this.props.product.properties_group_id,
     );
   }
-
-  showProducts = products => {
-    const {product} = this.props;
-    let result = null;
-    if (products.length > 0) {
-      result = products.map(d,index => (
-          d.product_id === product.product_id
-          && d.shopify_data.variants.length === 1
-          && d.shopify_data.variants[0].id === product.variant_id
-              ? null :
-              <OrderProductSwapList
-                  key={`${order.id}-prod-${d.product_id}`}
-                  orderId={order.id}
-                  productId={d.product_id}
-                  groupId={group.id}
-                  swapProductId={product.id}
-                  toggleSwap={this.props.toggleSwap}
-                  confirmSwap={this.confirmSwap}
-                  index={index}
-              />
-      ))
-    }
-    return result;
-  };
 
   scrollToTop() {
     this.topElement.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -136,15 +112,34 @@ class OrderProductSwap extends Component {
       );
     } else if (this.state.displayProducts && group
         && group.products_with_price_difference) {
+      const productCount = group.products_with_price_difference.length;
+      const pageCount = Math.ceil(productCount/10);
       swappableProducts = [
         <Separator icon="&#8633;" textKey="order_product_swap_separator" key={`order-${order.id}`} />,
-        this.showProducts(this.state.pagedProducts),
+        group.products_with_price_difference
+            .slice(this.state.offset, Math.min(productCount - 1, this.state.offset + 10))
+            .map((d,index) => (
+              d.product_id === product.product_id
+              && d.shopify_data.variants.length === 1
+              && d.shopify_data.variants[0].id === product.variant_id
+                  ? null :
+                <OrderProductSwapList
+                    key={`${order.id}-prod-${d.product_id}`}
+                    orderId={order.id}
+                    productId={d.product_id}
+                    groupId={group.id}
+                    swapProductId={product.id}
+                    toggleSwap={this.props.toggleSwap}
+                    confirmSwap={this.confirmSwap}
+                    index={index}
+                />
+        )),
         <ReactPaginate
-            previousLabel={'previous'}
-            nextLabel={'next'}
-            breakLabel={'...'}
-            breakClassName={'break-me'}
-            pageCount={this.state.pageCount}
+            previousLabel={'«'}
+            nextLabel={'»'}
+            // breakLabel={'...'}
+            // breakClassName={'break-me'}
+            pageCount={pageCount}
             marginPagesDisplayed={2}
             pageRangeDisplayed={5}
             onPageChange={this.handlePageClick}
