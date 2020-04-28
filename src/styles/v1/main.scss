@@ -15,6 +15,7 @@
 @import 'orderProductRemove';
 @import 'gatewayInput';
 @import 'orderProductSwap';
+@import 'pagination';
 
 .text-button {
   cursor: pointer;
@@ -100,6 +101,8 @@
     margin: 0;
     padding: 0;
     margin-left: 20px;
+    display: flex;
+    justify-content: center;
   }
   &:last-child {
     margin-bottom: none;

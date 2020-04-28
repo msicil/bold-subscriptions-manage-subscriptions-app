@@ -28,6 +28,7 @@
     "react": "^16.2.0",
     "react-dates": "^16.7.0",
     "react-dom": "^16.2.0",
+    "react-paginate": "^6.3.2",
     "react-redux": "^5.0.6",
     "redux": "^3.7.2",
     "redux-saga": "^0.16.0",

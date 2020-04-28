@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import ReactPaginate from 'react-paginate';
 import { connect } from 'react-redux';
 
 import Button from './Button';
@@ -20,6 +21,7 @@ class OrderProductSwap extends Component {
     this.state = {
       displayProducts: false,
       confirmSwap: false,
+      offset: 0
     };
 
     this.onClickToggleSwap = this.onClickToggleSwap.bind(this);
@@ -47,6 +49,27 @@ class OrderProductSwap extends Component {
       });
     }
   }
+
+  // setProductPage() {
+  //   if(this.props.group.products_with_price_difference) {
+  //     const swappableProducts = this.props.group.products_with_price_difference;
+  //     console.log(swappableProducts);
+  //     const productCount = swappableProducts.length;
+  //     const pagedProducts = swappableProducts.slice(this.state.offset, Math.min(productCount - 1, this.state.offset + 10));
+  //     console.log(pagedProducts);
+  //     this.setState({
+  //       pagedProducts,
+  //       pageCount: Math.ceil(swappableProducts.length / 10),
+  //     });
+  //   }
+  // }
+
+  handlePageClick = data => {
+    let selected = data.selected;
+    let offset = Math.ceil(selected * 10);
+
+    this.setState({ offset });
+  };
 
   onClickToggleSwap() {
     this.props.toggleSwap(
@@ -88,25 +111,42 @@ class OrderProductSwap extends Component {
         />
       );
     } else if (this.state.displayProducts && group
-        && group.products_with_price_difference
-        && group.products_with_price_difference !== null) {
+        && group.products_with_price_difference) {
+      const productCount = group.products_with_price_difference.length;
+      const pageCount = Math.ceil(productCount/10);
       swappableProducts = [
         <Separator icon="&#8633;" textKey="order_product_swap_separator" key={`order-${order.id}`} />,
-        group.products_with_price_difference.map(d => (
-          d.product_id === product.product_id
-          && d.shopify_data.variants.length === 1
-          && d.shopify_data.variants[0].id === product.variant_id
-            ? null :
-            <OrderProductSwapList
-              key={`${order.id}-prod-${d.product_id}`}
-              orderId={order.id}
-              productId={d.product_id}
-              groupId={group.id}
-              swapProductId={product.id}
-              toggleSwap={this.props.toggleSwap}
-              confirmSwap={this.confirmSwap}
-            />
+        group.products_with_price_difference
+            .slice(this.state.offset, Math.min(productCount - 1, this.state.offset + 10))
+            .map((d,index) => (
+              d.product_id === product.product_id
+              && d.shopify_data.variants.length === 1
+              && d.shopify_data.variants[0].id === product.variant_id
+                  ? null :
+                <OrderProductSwapList
+                    key={`${order.id}-prod-${d.product_id}`}
+                    orderId={order.id}
+                    productId={d.product_id}
+                    groupId={group.id}
+                    swapProductId={product.id}
+                    toggleSwap={this.props.toggleSwap}
+                    confirmSwap={this.confirmSwap}
+                    index={index}
+                />
         )),
+        <ReactPaginate
+            previousLabel={'«'}
+            nextLabel={'»'}
+            // breakLabel={'...'}
+            // breakClassName={'break-me'}
+            pageCount={pageCount}
+            marginPagesDisplayed={2}
+            pageRangeDisplayed={5}
+            onPageChange={this.handlePageClick}
+            containerClassName={'pagination'}
+            subContainerClassName={'pages pagination'}
+            activeClassName={'active'}
+        />
       ];
     } else {
       swappableProducts = (

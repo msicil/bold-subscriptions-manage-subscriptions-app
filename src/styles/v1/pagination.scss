@@ -1,0 +1,19 @@
+//.subscription-container .pagination ul {
+//  display: flex;
+//  justify-content: center;
+//}
+
+.subscription-container .pagination li {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+  transition: background-color .3s;
+}
+
+.subscription-container .pagination li.active {
+  background-color: #f7323f;
+  color: white;
+}
+
+.subscription-container .pagination li:hover:not(.active) {background-color: #ddd;}
