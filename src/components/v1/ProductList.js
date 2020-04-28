@@ -21,6 +21,7 @@ const ProductList = ({
             productTitle={product.product_title || ''}
             variantTitle={product.variant_title || ''}
           />
+          &nbsp;
           <Translation
             textKey="products_list_quantity"
             mergeFields={{
