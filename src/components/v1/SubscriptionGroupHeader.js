@@ -157,7 +157,8 @@ class SubscriptionGroupHeader extends Component {
                   <p><Translation textKey="order_frequency_heading" /></p>
                   <OrderFrequencyBlock orderId={this.props.order.id} />
                 </div>
-                {(order.shopify_order_tags === "wine-club-order" || order.order_products[0].product_title.includes('Subscription')) ?
+                {(order.shopify_order_tags === "wine-club-order" || order.order_products[0].product_title.includes('Subscription')
+                || order.order_products[0].product_title.includes('Wine Club')) ?
                     <div className="subscription-details-block">
                       <p>Wine Club Preferences</p>
                       <CasePreferencesBlock orderId={this.props.order.id} toggleDetails={() => this.props.toggleDetails()} />
