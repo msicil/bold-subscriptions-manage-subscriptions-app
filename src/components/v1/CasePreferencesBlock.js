@@ -10,13 +10,15 @@ import * as actions from '../../actions';
 import ButtonGroup from './ButtonGroup';
 import { MESSAGE_PROP_TYPE, ORDER_PROP_TYPE } from '../../constants/PropTypes';
 
-const case_type_url = 'https://foreman.lot18.blackfire.pro/script/metafield_updatetype?auth=EiHLaEELflWq5XYb6jhgbIfrO1rKIoFk:d454448eff91a41ff21ee93438ba9ce69761a6b2b604fe78e7299e2f7491b127'
-const case_size_url = 'https://foreman.lot18.blackfire.pro/script/metafield_updatesize?auth=EiHLaEELflWq5XYb6jhgbIfrO1rKIoFk:d454448eff91a41ff21ee93438ba9ce69761a6b2b604fe78e7299e2f7491b127'
+const case_type_url = 'https://foreman.lot18.blackfire.pro/script/metafield_updatetype?auth=EiHLaEELflWq5XYb6jhgbIfrO1rKIoFk:d454448eff91a41ff21ee93438ba9ce69761a6b2b604fe78e7299e2f7491b127&_await=true'
+const case_size_url = 'https://foreman.lot18.blackfire.pro/script/metafield_updatesize?auth=EiHLaEELflWq5XYb6jhgbIfrO1rKIoFk:d454448eff91a41ff21ee93438ba9ce69761a6b2b604fe78e7299e2f7491b127&_await=true'
+const metafield_get_url = 'https://foreman.lot18.blackfire.pro/script/metafield_get?auth=EiHLaEELflWq5XYb6jhgbIfrO1rKIoFk:d454448eff91a41ff21ee93438ba9ce69761a6b2b604fe78e7299e2f7491b127&_await=true'
+const refresh_case_url = 'https://foreman.lot18.blackfire.pro/script/lot18_refresh_subscription?auth=5OzgzAAX4dPQ9Uyed3n8FtVJd1WevhwP:640a3bb0df3e96afc1a5a50aab36ddca553b67ecef02bb8652ba0da0442c337d&_await=true'
+
 let shopName;
-console.log(window.location.hostname);
 switch (window.location.hostname) {
   case 'tastingroom.com':
-    shopName = 'testingroom.myshopify.com';
+    shopName = 'testingroom18.myshopify.com';
     break;
   case 'nytwineclub.com':
     shopName = 'nytwineclub.myshopify.com';
@@ -42,8 +44,6 @@ class CasePreferencesBlock extends Component {
       editing: false,
       selectedSize: 0,
       selectedType: 0,
-      sizeMetafieldID: 0,
-      typeMetafieldID: 0,
       updatingCasePreferences: false,
       updateCasePreferencesButtonDisabled: true,
     };
@@ -55,24 +55,18 @@ class CasePreferencesBlock extends Component {
 
   getData() {
     const shopifyCustomerId = this.props.order.shopify_customer_id;
-    axios.get(`https://tastingroom.com/admin/api/2019-10/customers/${shopifyCustomerId}/metafields.json`, {
+    axios.get(`${metafield_get_url}&id=${shopifyCustomerId}&shopdomain=${shopName}`, {
       headers: {
-        'X-Shopify-Access-Token': 'b3a13411c43e3f26aa89b5db24996c55',
+        // 'X-Shopify-Access-Token': 'b3a13411c43e3f26aa89b5db24996c55',
         'Content-Type': 'application/json',
       },
-    })
-      .then(res => res.json())
-      .then(
+    }).then(
         (result) => {
-          const selectedSize = result.metafields.find(({ key }) => key === 'caseSize').value;
-          const sizeMetafieldID = result.metafields.find(({ key }) => key === 'caseSize').id;
-          const selectedType = result.metafields.find(({ key }) => key === 'caseType').value;
-          const typeMetafieldID = result.metafields.find(({ key }) => key === 'caseType').id;
+          const selectedSize = result.data.metafields.find(({ key }) => key === 'caseSize').value;
+          const selectedType = result.data.metafields.find(({ key }) => key === 'caseType').value;
           this.setState({
             selectedSize,
             selectedType,
-            sizeMetafieldID,
-            typeMetafieldID,
           });
         },
       );
@@ -106,6 +100,7 @@ class CasePreferencesBlock extends Component {
   }
 
   async saveCasePreferences(e) {
+    console.log('Saving Preferences');
     const inputData = new FormData(this.formElement);
 
     const formInformation = {
@@ -119,31 +114,28 @@ class CasePreferencesBlock extends Component {
       updatingCasePreferences: true,
     });
 
+    console.log(`updating size to ${formInformation.size}`);
     const sizeRes = await axios({
       url: `${case_size_url}&id=${this.props.order.shopify_customer_id}&cust_caseSize=${formInformation.size}&shopdomain=${shopName}`,
       method: 'POST',
-      contentType: "application/x-www-form-urlencoded",
-      dataType: 'json',
+      contentType: "application/json"
     });
 
+    console.log(`updating size to ${formInformation.type}`);
     const typeRes = await axios({
       url: `${case_type_url}&id=${this.props.order.shopify_customer_id}&cust_caseType=${formInformation.type}&shopdomain=${shopName}`,
       method: 'POST',
-      contentType: "application/x-www-form-urlencoded",
-      dataType: 'json',
+      contentType: "application/json"
     });
 
-    console.log('Saving Preferences');
+
     Promise.all([sizeRes,typeRes]).then((values) => {
+      console.log(values);
       const selectedType = values[0].data.metafield.value;
-      const typeMetafieldID = values[0].data.metafield.id;
       const selectedSize = values[1].data.metafield.value;
-      const sizeMetafieldID = values[1].data.metafield.id;
       this.setState({
         selectedType,
-        typeMetafieldID,
         selectedSize,
-        sizeMetafieldID,
       });
       this.refreshCase();
     }).catch(err => {
@@ -160,7 +152,7 @@ class CasePreferencesBlock extends Component {
   async refreshCase() {
     const shopifyCustomerId = this.props.order.shopify_customer_id;
     const subscriptionId = this.props.order.id;
-    const shop = 'testingroom18.myshopify.com';
+    const shop = shopName;
     const body = {
       customer_id: shopifyCustomerId,
       subscription_id: subscriptionId,
@@ -169,7 +161,7 @@ class CasePreferencesBlock extends Component {
     try {
       const res = await axios({
         method: 'post',
-        url: 'https://lot18.j.blackfire.pro/map/lot18_refresh_subscription?auth=5OzgzAAX4dPQ9Uyed3n8FtVJd1WevhwP:640a3bb0df3e96afc1a5a50aab36ddca553b67ecef02bb8652ba0da0442c337d',
+        url: refresh_case_url,
         params: body,
         headers: {
           'Content-Type': 'application/json',

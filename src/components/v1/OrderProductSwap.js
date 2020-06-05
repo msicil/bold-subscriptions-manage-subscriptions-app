@@ -134,6 +134,7 @@ class OrderProductSwap extends Component {
                     index={index}
                 />
         )),
+          <div style={{textAlign: "center"}}>*If your selection is not available, we will replace it with a comparable wine</div>,
         <ReactPaginate
             previousLabel={'«'}
             nextLabel={'»'}
